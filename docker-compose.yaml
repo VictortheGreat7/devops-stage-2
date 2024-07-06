@@ -13,6 +13,9 @@ services:
       - "traefik.http.services.frontend.loadbalancer.server.port=5173"
     ports:
       - "5173:80"
+    depends_on:
+      - backend
+      - traefik
     restart: always
 
   backend:
@@ -29,6 +32,7 @@ services:
       - DATABASE_URL=postgresql://app:vagrant@db:5432/app
     depends_on:
       - db
+      - traefik
     restart: always
 
   db:
@@ -51,6 +55,8 @@ services:
       - "traefik.http.routers.adminer.tls=true"
       - "traefik.http.routers.adminer.middlewares=https-redirect@file"
       - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+    depends_on:
+      - traefik
     restart: always
 
   traefik:

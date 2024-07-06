@@ -4,11 +4,14 @@ FROM python:3.12-slim
 # Set working directory
 WORKDIR /app
 
+# Install curl and other necessary packages
+RUN apt-get update && apt-get install -y curl
+
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
 # Add Poetry bin directory to PATH
-ENV PATH="$PATH:/app/.poetry/bin"
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy .env file (optional, for environment variables)
 COPY .env ./
