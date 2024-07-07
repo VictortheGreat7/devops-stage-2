@@ -6,31 +6,38 @@ services:
       context: ./frontend
     container_name: frontend
     labels:
+      - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`ec2.mywonder.works`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls=true"
+        #      - "traefik.http.routers.frontend.entrypoints=websecure"
+        #      - "traefik.http.routers.frontend.tls=true"
+        #      - "traefik.http.routers.frontend.middlewares=https-redirect@file"
       - "traefik.http.services.frontend.loadbalancer.server.port=5173"
-    ports:
-      - "5173:80"
     depends_on:
       - backend
       - traefik
-    restart: always
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
     container_name: backend
     labels:
-      - "traefik.http.routers.backend.rule=Host(`ec2.mywonder.works`) && PathPrefix(`/api`, `/docs`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`ec2.mywonder.works`) && PathPrefix(`/api`)"
+        #      - "traefik.http.routers.backend.entrypoints=websecure"
+        #      - "traefik.http.routers.backend.tls=true"
+        #      - "traefik.http.routers.backend.middlewares=https-redirect@file"
+      - "traefik.http.routers.backend.rule=Host(`ec2.mywonder.works`) && PathPrefix(`/docs`)"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    ports:
+      - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://app:vagrant@db:5432/app
     depends_on:
       - db
       - traefik
+    entrypoint: ["poetry", "run", "bash", "./prestart.sh", "&&", "poetry", "run", "uvicorn", "app.main:app", "--reload"]
+    restart: unless-stopped
 
   db:
     image: postgres:16
@@ -39,48 +46,53 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: vagrant
       POSTGRES_DB: app
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      retries: 5
     volumes:
       - db_data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
 
   adminer:
     image: adminer
     container_name: adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - 8080:8080
     labels:
-      - "traefik.http.routers.adminer.rule=Host(`admin.mywonder.works`)"
-      - "traefik.http.routers.adminer.entrypoints=websecure"
-      - "traefik.http.routers.adminer.tls=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.adminer.rule=Host(`db.mywonder.works`)"
+        #      - "traefik.http.routers.adminer.entrypoints=websecure"
+        #      - "traefik.http.routers.adminer.tls=true"
+        #      - "traefik.http.routers.adminer.middlewares=https-redirect@file"
       - "traefik.http.services.adminer.loadbalancer.server.port=8080"
     depends_on:
       - traefik
-    restart: always
+    restart: unless-stopped
 
   traefik:
-    image: traefik:v2.4
+    image: traefik:latest
     container_name: traefik
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=your-email@example.com"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`proxy.mywonder.works`)"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+        #      - "--entrypoints.websecure.address=:443"
+        #      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+        #      - "--certificatesresolvers.myresolver.acme.email=greatvictor.anjorin@gmail.com"
+        #      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
-      - "443:443"
-      - "8080:8080"
+      #      - "443:443"
+      #      - "8090:8080"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "letsencrypt:/letsencrypt"
-      - "./traefik.toml:/etc/traefik/traefik.toml"
-    restart: always
+      - "/var/run/docker.sock:/var/run/docker.sock"
+        #      - "letsencrypt:/letsencrypt"
+        #      - "./traefik.toml:/etc/traefik/traefik.toml"
+    restart: unless-stopped
 
 volumes:
   db_data:
-  letsencrypt:
-
+    #  letsencrypt:

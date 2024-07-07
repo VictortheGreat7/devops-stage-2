@@ -26,9 +26,11 @@ COPY . .
 # Set the PYTHONPATH environment variable
 ENV PYTHONPATH=/app
 
-# Run the prestart script
-RUN poetry run bash ./prestart.sh
+EXPOSE 8000
 
-# iCommand to run the application
-CMD ["poetry" "run" "uvicorn" "app.main:app" "--reload"]
+# Run the prestart script
+#RUN poetry run bash ./prestart.sh
+
+# Command to run the application
+#CMD ["poetry" "run" "uvicorn" "app.main:app" "--reload"]
 
