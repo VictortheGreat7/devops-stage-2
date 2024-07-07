@@ -1,5 +1,5 @@
 # Base image with Python 3.12 and dependencies
-FROM python:3.12-slim
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.10
 
 # Set the working directory to /app
 WORKDIR /app
@@ -27,8 +27,8 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # Run the prestart script
-#RUN poetry run bash ./prestart.sh
+RUN poetry run bash ./prestart.sh
 
 # iCommand to run the application
-CMD ["ls", "-la"]
+CMD ["poetry" "run" "uvicorn" "app.main:app" "--reload"]
 
