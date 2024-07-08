@@ -18,19 +18,10 @@ COPY .env ./
 COPY pyproject.toml poetry.lock ./
 
 # Install dependencies
-RUN poetry install --no-interaction --no-ansi
+RUN poetry install
 
 # Copy the rest of the application code
 COPY . .
 
-# Set the PYTHONPATH environment variable
-ENV PYTHONPATH=/app
-
 EXPOSE 8000
-
-# Run the prestart script
-#RUN poetry run bash ./prestart.sh
-
-# Command to run the application
-#CMD ["poetry" "run" "uvicorn" "app.main:app" "--reload"]
 

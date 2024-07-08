@@ -36,7 +36,6 @@ services:
     depends_on:
       - db
       - traefik
-    entrypoint: ["poetry", "run", "bash", "./prestart.sh", "&&", "poetry", "run", "uvicorn", "app.main:app", "--reload"]
     restart: unless-stopped
 
   db:
